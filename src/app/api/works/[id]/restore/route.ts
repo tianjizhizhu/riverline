@@ -2,6 +2,7 @@ import { getWorkRow, restoreWork } from "@/lib/db";
 import {
   ApiFail,
   cleanDate,
+  cleanText,
   ok,
   parseId,
   readBody,
@@ -52,6 +53,7 @@ function parseSnapshot(raw: unknown): WorkSnapshot {
   if (!title) throw new ApiFail("快照工作名称为空");
   if (!goal) throw new ApiFail("快照目标为空");
   if (title.length > 50 || goal.length > 500) throw new ApiFail("快照字段超长");
+  const deliverTo = cleanText(work.deliverTo, "交付对象", 50);
   const difficulty = DIFFICULTIES.includes(work.difficulty as Difficulty)
     ? (work.difficulty as Difficulty)
     : null;
@@ -180,6 +182,7 @@ function parseSnapshot(raw: unknown): WorkSnapshot {
             ? work.categoryId
             : NaN,
       difficulty,
+      deliverTo,
     },
     lines,
     nodes,

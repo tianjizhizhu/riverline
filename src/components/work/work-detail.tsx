@@ -38,6 +38,7 @@ import { cn } from "@/lib/cn";
 import {
   lineAcceptsFork,
   lineAcceptsProgress,
+  lineVisibleInMap,
   mergeTargets,
   workStatusOf,
 } from "@/lib/derive";
@@ -263,10 +264,12 @@ export function WorkDetail({
   const isBlueprint = work.mode === "blueprint";
   const blueprintSpawned = isBlueprint && spawned != null;
 
-  // 切换线路即退出支线视图，避免图与列表所选线路不一致
+  // 切换线路：主线与一级分支回到完整脉络；更深层分支不画入完整脉络，
+  // 选中时直接进入该支线自己的视图，地图与列表始终指向同一条线
   const switchLine = (id: number) => {
+    const target = lines.find((l) => l.id === id);
     setSelectedId(id);
-    setViewLineId(null);
+    setViewLineId(lineVisibleInMap(lines, target) ? null : id);
   };
 
   const status = useMemo(() => workStatusOf(lines, nodes), [lines, nodes]);

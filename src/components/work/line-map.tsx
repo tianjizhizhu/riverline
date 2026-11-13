@@ -405,8 +405,12 @@ export function LineMap({
       return PAD_L + span / 2;
     };
 
+    // 只画一级支流：Fork 自当前轴（完整视图中即主线）的分支。
+    // 更深层级不进地图——二级分支的茎线从一级分支的 Fork 点出发、
+    // 回折线又扎回主线，来回穿行会看不清脉络；双击一级支线药丸
+    // 进入支线视图后，其直接子分支照常显示为支流
     const branches = viewLines
-      .filter((l) => l.kind === "branch")
+      .filter((l) => l.kind === "branch" && l.parentLineId === axisId)
       .sort((a, b) => {
         const an = a.forkNodeId ? nodeById.get(a.forkNodeId) : undefined;
         const bn = b.forkNodeId ? nodeById.get(b.forkNodeId) : undefined;
@@ -458,6 +462,12 @@ export function LineMap({
     const cardTop = mainY + STEM;
     const height = cardTop + CARD_H + 14;
 
+    // 未画入完整脉络的深层分支数量：仅完整视图提示，引导双击下钻
+    const hiddenBranchCount = focused
+      ? 0
+      : lines.filter((l) => l.kind === "branch" && l.parentLineId !== main.id)
+          .length;
+
     return {
       main: focused ?? main,
       originMainId: main.id,
@@ -471,6 +481,7 @@ export function LineMap({
       cardTop,
       height,
       chartW,
+      hiddenBranchCount,
       first: seq[0],
       last: seq[seq.length - 1],
     };
@@ -550,6 +561,7 @@ export function LineMap({
     cardTop,
     height,
     chartW,
+    hiddenBranchCount,
   } = layout;
   const mainSelected = main.id === selectedId;
   const mainOpen = layout.last.nextTask !== "";
@@ -635,6 +647,14 @@ export function LineMap({
                   );
                 },
               )}
+            </span>
+          )}
+          {hiddenBranchCount > 0 && (
+            <span
+              className="text-zinc-400"
+              title="二级及以下分支不画入完整脉络，避免线条来回穿行；双击支流药丸进入支线视图即可查看"
+            >
+              另有 {hiddenBranchCount} 条下级分支未画出
             </span>
           )}
           <span className="ml-auto text-zinc-300">
@@ -950,11 +970,10 @@ export function LineMap({
               const ctxLine = context
                 ? lines.find((l) => l.id === nd.lineId)
                 : undefined;
+              // 汇合徽标列出全部汇入分支（含未画入地图的深层分支），
+              // 深层分支的完整走向可在其支线视图中查看
               const mergeFrom = nd.mergedBranchIds
-                .map((id) => {
-                  if (focused && id === focused.id) return focused.name;
-                  return lanes.find((l) => l.line.id === id)?.line.name;
-                })
+                .map((id) => lines.find((l) => l.id === id)?.name)
                 .filter((name): name is string => !!name);
               return (
                 <NodeCard

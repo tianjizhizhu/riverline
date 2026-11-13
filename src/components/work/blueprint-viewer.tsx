@@ -7,6 +7,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { NodeTag } from "@/components/ui/status";
 import { LineMap } from "@/components/work/line-map";
 import { cn } from "@/lib/cn";
+import { lineVisibleInMap } from "@/lib/derive";
 import type { Category, Line, NodeRow, Work } from "@/lib/types";
 
 /**
@@ -29,10 +30,18 @@ export function BlueprintViewer({
   categories: Category[];
 }) {
   const [selectedId, setSelectedId] = useState<number>(lines[0]?.id ?? 0);
+  // 深层分支不画入完整脉络，选中时进入该支线自己的视图
+  const [viewLineId, setViewLineId] = useState<number | null>(null);
   const main = lines.find((l) => l.kind === "main") ?? lines[0];
   const selected = lines.find((l) => l.id === selectedId) ?? main;
   const lineNodes = nodes.filter((n) => n.lineId === selected.id);
   const branches = lines.filter((l) => l.kind === "branch");
+
+  const switchLine = (id: number) => {
+    const target = lines.find((l) => l.id === id);
+    setSelectedId(id);
+    setViewLineId(lineVisibleInMap(lines, target) ? null : id);
+  };
 
   return (
     <Dialog
@@ -75,6 +84,8 @@ export function BlueprintViewer({
             nodes={nodes}
             selectedId={selected.id}
             onSelect={setSelectedId}
+            focusLineId={viewLineId}
+            onExitFocus={() => setViewLineId(null)}
           />
         </div>
 
@@ -86,7 +97,7 @@ export function BlueprintViewer({
               <button
                 key={line.id}
                 type="button"
-                onClick={() => setSelectedId(line.id)}
+                onClick={() => switchLine(line.id)}
                 className={cn(
                   "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] transition active:scale-[0.97]",
                   active

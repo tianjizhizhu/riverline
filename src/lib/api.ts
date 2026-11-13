@@ -11,8 +11,11 @@ import type {
 
 export class ApiError extends Error {}
 
+// 子路径部署（/riverline）下，站内接口需要带 basePath 前缀
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
+  const res = await fetch(`${BASE_PATH}${url}`, {
     headers: { "Content-Type": "application/json" },
     ...init,
   });

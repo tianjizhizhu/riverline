@@ -42,3 +42,6 @@ next-env.d.ts
 
 # local sqlite data
 /data/
+
+# 本地运维日志：含服务器 IP、证书与部署细节，不入库
+/CHANGELOG.md

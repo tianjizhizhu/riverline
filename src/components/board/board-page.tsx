@@ -112,10 +112,13 @@ export function BoardPage({
     }
   };
 
+  // 分类计数跟随视图筛选：全部 / 进行中 / 已完成 各自口径
   const counts = useMemo(() => {
+    const scoped =
+      filter === "all" ? initial : initial.filter((s) => s.status === filter);
     const map = new Map<number, number>();
     let uncategorized = 0;
-    for (const s of initial) {
+    for (const s of scoped) {
       if (s.work.categoryId == null) uncategorized += 1;
       else map.set(s.work.categoryId, (map.get(s.work.categoryId) ?? 0) + 1);
     }
@@ -129,8 +132,8 @@ export function BoardPage({
         ),
       );
     }
-    return { map, uncategorized, group, total: initial.length };
-  }, [initial, categories]);
+    return { map, uncategorized, group, total: scoped.length };
+  }, [initial, categories, filter]);
 
   const inCategory = useMemo(
     () =>
